@@ -1,5 +1,6 @@
 /* Adaptation of code created by http://arduinobasics.blogspot.com.au/2011/06/displaying-serial-data-from-arduino-uno.html
  * to include a function to save the displayed data to a text file from the Processing example at https://processing.org/reference/createWriter_.html
+ * The Arduino 'Time" functions were taken from: http://playground.arduino.cc/Code/DateTime
  */
  
 import processing.serial.*;
