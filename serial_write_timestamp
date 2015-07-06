@@ -1,0 +1,96 @@
+/* Adaptation of code created by http://arduinobasics.blogspot.com.au/2011/06/displaying-serial-data-from-arduino-uno.html
+ * to include a function to save the displayed data to a text file from the Processing example at https://processing.org/reference/createWriter_.html
+ */
+ 
+import processing.serial.*;
+import java.util.Date;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+public static final short portIndex = 0;  // select the com port, 0 is the first port
+public static final String TIME_HEADER = "T"; //header for arduino serial time message 
+public static final char TIME_REQUEST = 7;  // ASCII bell character 
+public static final char LF = 10;     // ASCII linefeed
+public static final char CR = 13;     // ASCII linefeed
+
+Serial myPort;
+PrintWriter output;
+String sensorReading="";
+PFont font;
+
+
+void setup() {
+  size(600,300);
+  myPort = new Serial(this, "COM5", 9600);
+  myPort.bufferUntil('\n');
+  font = createFont(PFont.list()[2],32);
+  textFont(font);
+  println(getTimeNow());
+  output = createWriter("data.txt"); 
+}
+
+void draw() {
+  textSize(25);
+  textAlign(LEFT);
+  fill(0);
+  text("\t\tClick to send\n\n\nTime Sync", 0, 75, 200, 175);
+  if ( myPort.available() > 0) {  // If data is available,
+    char val = char(myPort.read());         // read it and store it in val
+    if(val == TIME_REQUEST){
+       long t = getTimeNow();
+       sendTimeMessage(TIME_HEADER, t);   
+    }
+    else
+    { 
+       if(val == LF)
+           ; //igonore
+       else if(val == CR)           
+         println();
+       else  
+         print(val); // echo everying but time request
+    }
+  }  
+}  
+
+void serialEvent (Serial myPort){
+ sensorReading = myPort.readStringUntil('\n');
+  if(sensorReading != null){
+    sensorReading=trim(sensorReading);
+  }
+
+  writeText("\nSensor Reading: " + sensorReading);
+  output.println("Sensor Reading: " + sensorReading); // Write the data to the file
+}
+
+
+void writeText(String textToWrite){
+  background(255);
+  fill(0);
+  text(textToWrite, width/20, height/2);   
+}
+void mousePressed() {  
+  sendTimeMessage( TIME_HEADER, getTimeNow());   
+}
+
+void sendTimeMessage(String header, long time) {  
+  String timeStr = String.valueOf(time);  
+  myPort.write(header);  // send header and time to arduino
+  myPort.write(timeStr); 
+  myPort.write('\n');  
+}
+
+long getTimeNow(){
+  // java time is in ms, we want secs    
+  Date d = new Date();
+  Calendar cal = new GregorianCalendar();
+  long current = d.getTime()/1000;
+  long timezone = cal.get(cal.ZONE_OFFSET)/1000;
+  long daylight = cal.get(cal.DST_OFFSET)/1000;
+  return current + timezone + daylight; 
+}
+
+void keyPressed() {
+  output.flush(); // Writes the remaining data to the file
+  output.close(); // Finishes the file
+  exit(); // Stops the program
+}
