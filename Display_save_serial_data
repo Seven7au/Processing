@@ -1,0 +1,46 @@
+/* Adaptation of code created by http://arduinobasics.blogspot.com.au/2011/06/displaying-serial-data-from-arduino-uno.html
+ * to include a function to save the displayed data to a text file
+ */
+ 
+import processing.serial.*;
+Serial myPort;
+PrintWriter output;
+String sensorReading="";
+PFont font;
+
+
+void setup() {
+  size(800,400);
+  myPort = new Serial(this, "COM5", 9600);
+  myPort.bufferUntil('\n');
+  font = createFont(PFont.list()[2],32);
+  textFont(font);
+  output = createWriter("data.txt"); 
+}
+
+void draw() {
+  //The serialEvent controls the display
+}  
+
+void serialEvent (Serial myPort){
+ sensorReading = myPort.readStringUntil('\n');
+  if(sensorReading != null){
+    sensorReading=trim(sensorReading);
+  }
+
+  writeText("Sensor Reading: " + sensorReading);
+  output.println("Sensor Reading: " + sensorReading); // Write the data to the file
+}
+
+
+void writeText(String textToWrite){
+  background(255);
+  fill(0);
+  text(textToWrite, width/20, height/2);   
+}
+
+void keyPressed() {
+  output.flush(); // Writes the remaining data to the file
+  output.close(); // Finishes the file
+  exit(); // Stops the program
+}
