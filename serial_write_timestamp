@@ -18,8 +18,9 @@ PrintWriter output;
 String sensorReading="";
 PFont font;
 
+
 void setup() {
-  size(600,300);
+  size(900,300);
   myPort = new Serial(this, "COM5", 9600);
   myPort.bufferUntil('\n');
   font = createFont(PFont.list()[2],32);
@@ -27,16 +28,17 @@ void setup() {
   println(getTimeNow());
   output = createWriter("data.txt"); 
 }
+
 void draw() {
   textSize(25);
   textAlign(LEFT);
   fill(0);
+  text("Click to send Time Sync", 20, 50, 300, 175);
   if ( myPort.available() > 0) {  // If data is available,
     char val = char(myPort.read());         // read it and store it in val
     if(val == TIME_REQUEST){
        long t = getTimeNow();
-       sendTimeMessage(TIME_HEADER, t);
-        
+       sendTimeMessage(TIME_HEADER, t);   
     }
     else
     { 
@@ -49,26 +51,35 @@ void draw() {
     }
   }  
 }  
+
 void serialEvent (Serial myPort){
  sensorReading = myPort.readStringUntil('\n');
   if(sensorReading != null){
     sensorReading=trim(sensorReading);
-    sendTimeMessage( TIME_HEADER, getTimeNow());  
   }
-  writeText("\nSensor Reading: " + sensorReading);
-  output.println("Sensor Reading: " + sensorReading); // Write the data to the file
+
+  writeText("\nSensor Reading:"+sensorReading);
+  output.println("Sensor Reading:"+ sensorReading); // Write the data to the file
 }
+
+
 void writeText(String textToWrite){
   background(255);
   fill(0);
   text(textToWrite, width/20, height/2);   
 }
+void mousePressed() {  
+  sendTimeMessage( TIME_HEADER, getTimeNow());   
+}
+
+
 void sendTimeMessage(String header, long time) {  
   String timeStr = String.valueOf(time);  
   myPort.write(header);  // send header and time to arduino
   myPort.write(timeStr); 
   myPort.write('\n');  
 }
+
 long getTimeNow(){
   // java time is in ms, we want secs    
   Date d = new Date();
@@ -78,6 +89,7 @@ long getTimeNow(){
   long daylight = cal.get(cal.DST_OFFSET)/1000;
   return current + timezone + daylight; 
 }
+
 void keyPressed() {
   output.flush(); // Writes the remaining data to the file
   output.close(); // Finishes the file
